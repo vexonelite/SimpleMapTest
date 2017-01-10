@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">SimpleMapTest</string>
+
+    <string name="lack_of_location_permission">You do not allow the app to access location service!</string>
+
+    <string name="empty_string"/>
+
+</resources>
