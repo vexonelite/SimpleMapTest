@@ -227,7 +227,7 @@ public class GoogleMapHelper implements OnMapReadyCallback {
         }
     }
 
-    public boolean checkIfMapIsReady() {
+    public boolean isMapReady() {
         return (null != mGoogleMap);
     }
 
@@ -237,7 +237,7 @@ public class GoogleMapHelper implements OnMapReadyCallback {
     }
 
     public void addMarkersToGoogleMap (List<MarkerOptions> markerOptionsList) {
-        if ( !checkIfMapIsReady()) {
+        if ( !isMapReady()) {
             return;
         }
 
@@ -257,7 +257,7 @@ public class GoogleMapHelper implements OnMapReadyCallback {
     }
 
     public boolean getCameraToSpecifiedLocation (LatLng targetPosition) {
-        if ( !checkIfMapIsReady()) {
+        if ( !isMapReady()) {
             return false;
         }
 
