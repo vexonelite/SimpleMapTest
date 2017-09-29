@@ -1,17 +1,20 @@
 package tw.realtime.project.simplemaptest;
 
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.content.DialogInterface;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.AppCompatActivity;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.SpannableString;
 import android.util.Log;
 
-import java.lang.ref.WeakReference;
-
 public class MainActivity extends AppCompatActivity {
+
+    private String getLogTag () {
+        return this.getClass().getSimpleName();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,20 +39,38 @@ public class MainActivity extends AppCompatActivity {
         dialog.setCallbacks(positiveCallback, negativeCallback);
         dialog.setMessage(message);
         dialog.setSingleOption(true);
-        dialog.show(getSupportFragmentManager(), "error_dialog");
+        dialog.show(getFragmentManager(), "error_dialog");
     }
 
     private void initMapFragment () {
         Fragment next = new SimpleMapFragment();
-        FragmentManager tFragManager = getSupportFragmentManager();
+        FragmentManager tFragManager = getFragmentManager();
         FragmentTransaction tFragTransaction = tFragManager.beginTransaction();
         tFragTransaction.setTransition(FragmentTransaction.TRANSIT_NONE);
-        tFragTransaction.replace(R.id.container, next, next.getClass().getSimpleName());
+        tFragTransaction.replace(R.id.fragmentContainer, next, next.getClass().getSimpleName());
         try {
             tFragTransaction.commit();
-        } catch (Exception e) {
-            Log.e("MainActivity", "Exception on FragmentTransaction.commit()");
-            e.printStackTrace();
         }
+        catch (Exception e) {
+            LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on FragmentTransaction.commit()", e);
+        }
+    }
+
+    // Override onActivityResult() method and redirect to Fragment#onActivityResult()
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult() - requestCode: " + requestCode);
+
+        switch (requestCode) {
+            case GoogleMapHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST :
+            case LocationHelper.REQUEST_CHECK_SETTINGS:
+                Fragment fragment = getFragmentManager().findFragmentById(R.id.fragmentContainer);
+                if (null != fragment) {
+                    LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult() - fragment: " + fragment.getClass().getSimpleName());
+                    fragment.onActivityResult(requestCode, resultCode, data);
+                }
+                break;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 }

@@ -3,9 +3,9 @@ package tw.realtime.project.simplemaptest;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.v4.app.DialogFragment;
 
 public class ConfirmDialog extends DialogFragment {
 

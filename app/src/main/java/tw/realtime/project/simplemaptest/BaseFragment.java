@@ -1,8 +1,8 @@
 package tw.realtime.project.simplemaptest;
 
 import android.app.Activity;
+import android.app.Fragment;
 import android.content.DialogInterface;
-import android.support.v4.app.Fragment;
 
 
 public abstract class BaseFragment extends Fragment {
