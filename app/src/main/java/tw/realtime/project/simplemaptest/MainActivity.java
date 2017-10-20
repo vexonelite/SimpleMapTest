@@ -62,8 +62,8 @@ public class MainActivity extends AppCompatActivity {
         LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult() - requestCode: " + requestCode);
 
         switch (requestCode) {
-            case GoogleMapHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST :
-            case LocationHelper.REQUEST_CHECK_SETTINGS:
+            case GoogleMapHelper.CONNECTION_FAILURE_RESOLUTION_REQUEST:
+            case BaseLocationHelper.REQUEST_CHECK_SETTINGS:
                 Fragment fragment = getFragmentManager().findFragmentById(R.id.fragmentContainer);
                 if (null != fragment) {
                     LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult() - fragment: " + fragment.getClass().getSimpleName());

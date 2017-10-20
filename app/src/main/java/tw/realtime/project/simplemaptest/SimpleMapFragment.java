@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.location.Location;
@@ -24,7 +25,7 @@ import com.google.android.gms.maps.model.Marker;
 
 public class SimpleMapFragment extends BaseFragment {
 
-    private LocationHelper mLocationHelper;
+    private BaseLocationHelper mLocationHelper;
     private GoogleMapHelper mGoogleMapHelper;
 
 
@@ -32,6 +33,10 @@ public class SimpleMapFragment extends BaseFragment {
     public View onCreateView(LayoutInflater inflater,
                              ViewGroup container,
                              Bundle savedInstanceState) {
+
+        if (null == mLocationHelper) {
+            mLocationHelper = new LocationHelper(getActivity(), new MyLocationHelperCallback());
+        }
 
         View rootView = inflater.inflate(R.layout.base_fragment_simple_map, container, false);
         setUpMapFragment(R.id.googleMapContainer);
@@ -43,7 +48,15 @@ public class SimpleMapFragment extends BaseFragment {
                 public void onClick(View view) {
                     view.setEnabled(false);
 
-                    //getCameraToSpecifiedLocation( locationToLatLng(getCurrentLocation() ) );
+                    if (null == mLocationHelper.getCurrentLocation()) {
+                        mLocationHelper.resetSetting();
+                        mLocationHelper.permissionCheckAndAskIfNeeded();
+                    }
+                    else {
+                        mGoogleMapHelper.getCameraToSpecifiedLocation(
+                                LocationHelper.locationToLatLng(mLocationHelper.getCurrentLocation()) );
+                    }
+
                     //taggleMapTraffic();
 
                     view.setEnabled(true);
@@ -53,41 +66,17 @@ public class SimpleMapFragment extends BaseFragment {
         return rootView;
     }
 
-//    @Override
-//    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-//        super.onActivityCreated(savedInstanceState);
-//
-//        if (null == mLocationHelper) {
-//            mLocationHelper = new LocationHelper(new MyLocationHelperCallback());
-//        }
-//        mLocationHelper.initialGoogleApiClient(getActivity());
-//    }
-
-    @Override
-    public void onResume () {
-        super.onResume();
-
-        if ( (null != mGoogleMapHelper) && (mGoogleMapHelper.isMapReady()) && (null != mLocationHelper) ) {
-            mLocationHelper.enableGoogleApiClient();
-        }
-    }
-
     @Override
     public void onPause () {
         super.onPause();
 
-        if (null != mLocationHelper) {
-            mLocationHelper.disableGoogleApiClient();
-        }
+        mLocationHelper.stopLocationUpdates();
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        if (null != mLocationHelper) {
-            mLocationHelper.disableGoogleApiClient();
-            mLocationHelper = null;
-        }
+        mLocationHelper.stopLocationUpdates();
     }
 
 //    @Override
@@ -145,13 +134,9 @@ public class SimpleMapFragment extends BaseFragment {
         // MapReadyDelegate
         @Override
         public void onMapReady(GoogleMap googleMap) {
-
-            if (null == mLocationHelper) {
-                mLocationHelper = new LocationHelper(new MyLocationHelperCallback());
+            if (null != mLocationHelper) {
+                mLocationHelper.permissionCheckAndAskIfNeeded();
             }
-            mLocationHelper.initialGoogleApiClient(getActivity());
-            mLocationHelper.enableGoogleApiClient();
-            //mLocationHelper.checkLocationSettings();
         }
 
         // MapCameraDelegate
@@ -173,7 +158,12 @@ public class SimpleMapFragment extends BaseFragment {
         }
     }
 
-    private class MyLocationHelperCallback implements LocationHelper.Delegate {
+    private class LocationHelper extends BaseLocationHelper {
+
+        public LocationHelper(Context context, Delegate delegate) {
+            super(context, delegate);
+        }
+
         @Override
         public Activity getAttachedActivity() {
             return getActivity();
@@ -188,13 +178,21 @@ public class SimpleMapFragment extends BaseFragment {
         public boolean isFragmentInstance() {
             return true;
         }
+    }
+
+    private class MyLocationHelperCallback implements BaseLocationHelper.Delegate {
 
         @Override
-        public void onLocationChanged(Location location) {
-            LogWrapper.showLog(Log.INFO, getLogTag(), "MyLocationHelperCallback#onLocationChanged: " + location);
+        public void onLocationResult(Location location) {
+            LogWrapper.showLog(Log.INFO, getLogTag(), "MyLocationHelperCallback#onLocationResult: " + location);
             if (null != mGoogleMapHelper) {
                 mGoogleMapHelper.getCameraToSpecifiedLocation(GoogleMapHelper.locationToLatLng(location) );
             }
+        }
+
+        @Override
+        public void onStartLocationUpdates() {
+            LogWrapper.showLog(Log.INFO, getLogTag(), "MyLocationHelperCallback#onStartLocationUpdates");
         }
     }
 
@@ -204,26 +202,16 @@ public class SimpleMapFragment extends BaseFragment {
 
         switch (requestCode) {
             // Check for the integer request code originally supplied to startResolutionForResult().
-            case LocationHelper.REQUEST_CHECK_SETTINGS: {
+            case BaseLocationHelper.REQUEST_CHECK_SETTINGS: {
                 switch (resultCode) {
                     case Activity.RESULT_OK:
                         LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult - User agreed to make required location settings changes.");
                         if (null != mLocationHelper) {
                             if (null == mLocationHelper.getCurrentLocation()) {
-                                // If the initial location was never previously requested,
-                                // we use FusedLocationApi.getLastLocation() to get it.
-                                // If it was previously requested, we store its value in the Bundle and check for it in onCreate().
-                                // We do not request it again unless the user specifically requests location updates
-                                // by pressing the Start Updates button.
-                                //
-                                // Because we cache the value of the initial location in the Bundle,
-                                // it means that if the user launches the activity,
-                                // moves to a new location, and then changes the device orientation,
-                                // the original location is displayed as the activity is re-created.
-                                // mCurrentLocation = LocationServices.FusedLocationApi.getLastLocation(mGoogleApiClient);
-                                mLocationHelper.makeLocationUpdatesReq(LocationHelper.FAST_REQUEST);
-                            } else {
-                                mLocationHelper.cancelLocationUpdatesReq();
+                                mLocationHelper.startLocationUpdates(BaseLocationHelper.FAST_REQUEST);
+                            }
+                            else {
+                                mLocationHelper.stopLocationUpdates();
                                 if (null != mGoogleMapHelper) {
                                     mGoogleMapHelper.getCameraToSpecifiedLocation(
                                             GoogleMapHelper.locationToLatLng(mLocationHelper.getCurrentLocation()));
@@ -237,7 +225,7 @@ public class SimpleMapFragment extends BaseFragment {
                     case Activity.RESULT_CANCELED:
                         LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult - User chose not to make required location settings changes.");
                         if (null != mLocationHelper) {
-                            mLocationHelper.setNotToMakeRequiredLocationSettingsFlag(true);
+                            mLocationHelper.lockHasCheckedLocationSettingsFlag();
                         }
                         break;
                 }
@@ -278,13 +266,17 @@ public class SimpleMapFragment extends BaseFragment {
                         LogWrapper.showLog(Log.WARN, getLogTag(), "onRequestPermissionsResult() - mLocationHelper is null!");
                     }
                 }
-//                else {
-//                    LogWrapper.showLog(Log.WARN, getLogTag(), "onRequestPermissionsResult() - no Permissions granted!");
-//                    // permission denied, boo!
-//                    // Disable the functionality that depends on this permission.
+                else {
+                    LogWrapper.showLog(Log.WARN, getLogTag(), "onRequestPermissionsResult() - no Permissions granted!");
+                    // permission denied, boo!
+                    // Disable the functionality that depends on this permission.
 //                    String message = getString(R.string.lack_of_location_permission);
 //                    showAlertDialog(true, "", message, null, null, new LackOfPermissionsHandler(), new LackOfPermissionsHandler());
-//                }
+
+                    if (null != mLocationHelper) {
+                        mLocationHelper.lockHasAskedPermissionFlag();
+                    }
+                }
                 break;
             }
             // other 'case' lines to check for other permissions this app might request
