@@ -414,6 +414,64 @@ public abstract class BaseLocationHelper {
         return nf.format(distanceInKm);
     }
 
+    public static class RtLocationBound {
+
+        private double mMaxLatitude;
+        private double mMaxLongitude;
+        private double mMinLatitude;
+        private double mMinLongitude;
+
+        private RtLocationBound (double maxLatitude, double maxLongitude, double minLatitude, double minLongitude) {
+            mMaxLatitude = maxLatitude;
+            mMaxLongitude = maxLongitude;
+            mMinLatitude = minLatitude;
+            mMinLongitude = minLongitude;
+        }
+
+        public double getMaxLatitude() {
+            return mMaxLatitude;
+        }
+
+        public double getMaxLongitude() {
+            return mMaxLongitude;
+        }
+
+        public double getMinLatitude() {
+            return mMinLatitude;
+        }
+
+        public double getMinLongitude() {
+            return mMinLongitude;
+        }
+    }
+
+    public static RtLocationBound computeLocationBound (Location myLocation, double distanceInMeter) throws IllegalArgumentException {
+        if (null == myLocation) {
+            throw new IllegalArgumentException("myLocation is null");
+        }
+        if (distanceInMeter == 0d) {
+            throw new IllegalArgumentException("distanceInMeter = 0d");
+        }
+
+        // number 6378137d stands for the periphery of earth
+        double distance = Math.abs(distanceInMeter);
+        double latitude1 = myLocation.getLatitude() + (180d / Math.PI) * (distance / 6378137d);
+        double longitude1 = myLocation.getLongitude() + (180d / Math.PI) * (distance / 6378137d) / Math.cos(myLocation.getLatitude());
+        LogWrapper.showLog(Log.INFO, "BaseLocationHelper", "computeLocationBound - latitude1: " + latitude1
+                + ", longitude1: " + longitude1);
+        double latitude2 = myLocation.getLatitude() + (180d / Math.PI) * (-distance / 6378137d);
+        double longitude2 = myLocation.getLongitude() + (180d / Math.PI) * (-distance / 6378137d) / Math.cos(myLocation.getLatitude());
+        LogWrapper.showLog(Log.INFO, "BaseLocationHelper", "computeLocationBound - latitude2: " + latitude2
+                + ", longitude2: " + longitude2);
+        double maxLatitude = Math.max(latitude1, latitude2);
+        double maxLongitude = Math.max(longitude1, longitude2);
+        double minLatitude = Math.min(latitude1, latitude2);
+        double minLongitude = Math.min(longitude1, longitude2);
+        LogWrapper.showLog(Log.INFO, "BaseLocationHelper", "computeLocationBound - maxLatitude: " + maxLatitude
+                + ", maxLongitude: " + maxLongitude + ", minLatitude: " + minLatitude + ", minLongitude: " + minLongitude);
+        return new RtLocationBound(maxLatitude, maxLongitude, minLatitude, minLongitude);
+    }
+
 
 //    @Override
 //    public void onActivityResult(int requestCode, int resultCode, Intent data) {
