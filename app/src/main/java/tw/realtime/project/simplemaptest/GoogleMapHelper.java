@@ -193,6 +193,8 @@ public class GoogleMapHelper implements OnMapReadyCallback {
         mGoogleMap.getUiSettings().setCompassEnabled(true);
         // Enable / Disable Rotate gesture
         mGoogleMap.getUiSettings().setRotateGesturesEnabled(true);
+        // Enable / Disable Tilt gesture
+        mGoogleMap.getUiSettings().setTiltGesturesEnabled(false);
         // Enable / Disable zooming functionality
         mGoogleMap.getUiSettings().setZoomGesturesEnabled(true);
 
@@ -229,6 +231,22 @@ public class GoogleMapHelper implements OnMapReadyCallback {
 
     public boolean isMapReady() {
         return (null != mGoogleMap);
+    }
+
+    /**
+     * Before you involve the method, you must make sure that
+     * user has granted the location permission;
+     */
+    public void setMyLocationEnabled(boolean flag) {
+        if ( !isMapReady()) {
+            return;
+        }
+        try {
+            mGoogleMap.setMyLocationEnabled(flag);
+        }
+        catch (Exception e) {
+            LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on setMyLocationEnabled", e);
+        }
     }
 
     public void toggleMapTraffic () {
