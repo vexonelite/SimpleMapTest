@@ -232,10 +232,21 @@ public abstract class BaseLocationHelper {
                     + "All location settings are satisfied.");
 
             if (null == mCurrentLocation) {
-                startLocationUpdates(FAST_REQUEST);
+                try {
+                    startLocationUpdates(FAST_REQUEST);
+                }
+                catch (Exception e) {
+                    LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve startLocationUpdates", e);
+                }
+
             }
             else {
-                stopLocationUpdates();
+                try {
+                    stopLocationUpdates();
+                }
+                catch (Exception e) {
+                    LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve stopLocationUpdates", e);
+                }
             }
         }
 
@@ -287,7 +298,13 @@ public abstract class BaseLocationHelper {
                 if (null != mDelegate) {
                     mDelegate.onLocationResult(location);
                 }
-                stopLocationUpdates();
+
+                try {
+                    stopLocationUpdates();
+                }
+                catch (Exception e) {
+                    LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve stopLocationUpdates", e);
+                }
             }
             else {
                 LogWrapper.showLog(Log.INFO, getLogTag(), "MyLocationCallback#onLocationResult - location is null!");
@@ -303,7 +320,7 @@ public abstract class BaseLocationHelper {
      * Requests location updates from the FusedLocationApi. Note: we don't call this unless location
      * runtime permission has been granted.
      */
-    public void startLocationUpdates(LocationRequest locationRequest) {
+    public void startLocationUpdates(LocationRequest locationRequest) throws Exception {
         if (isBeingLocationUpdate) {
             LogWrapper.showLog(Log.WARN, getLogTag(), "startLocationUpdates - no need");
             return;
@@ -342,7 +359,7 @@ public abstract class BaseLocationHelper {
     /**
      * Removes location updates from the FusedLocationApi.
      */
-    public void stopLocationUpdates() {
+    public void stopLocationUpdates() throws Exception {
         if (!isBeingLocationUpdate) {
             LogWrapper.showLog(Log.WARN, getLogTag(), "stopLocationUpdates - no need");
             return;
