@@ -69,14 +69,23 @@ public class SimpleMapFragment extends BaseFragment {
     @Override
     public void onPause () {
         super.onPause();
-
-        mLocationHelper.stopLocationUpdates();
+        try {
+            mLocationHelper.stopLocationUpdates();
+        }
+        catch (Exception e) {
+            LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve startLocationUpdates", e);
+        }
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        mLocationHelper.stopLocationUpdates();
+        try {
+            mLocationHelper.stopLocationUpdates();
+        }
+        catch (Exception e) {
+            LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve startLocationUpdates", e);
+        }
     }
 
 //    @Override
@@ -208,10 +217,21 @@ public class SimpleMapFragment extends BaseFragment {
                         LogWrapper.showLog(Log.INFO, getLogTag(), "onActivityResult - User agreed to make required location settings changes.");
                         if (null != mLocationHelper) {
                             if (null == mLocationHelper.getCurrentLocation()) {
-                                mLocationHelper.startLocationUpdates(BaseLocationHelper.FAST_REQUEST);
+                                try {
+                                    mLocationHelper.startLocationUpdates(BaseLocationHelper.FAST_REQUEST);
+                                }
+                                catch (Exception e) {
+                                    LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve startLocationUpdates", e);
+                                }
                             }
                             else {
-                                mLocationHelper.stopLocationUpdates();
+                                try {
+                                    mLocationHelper.stopLocationUpdates();
+                                }
+                                catch (Exception e) {
+                                    LogWrapper.showLog(Log.ERROR, getLogTag(), "Exception on involve stopLocationUpdates", e);
+                                }
+
                                 if (null != mGoogleMapHelper) {
                                     mGoogleMapHelper.getCameraToSpecifiedLocation(
                                             GoogleMapHelper.locationToLatLng(mLocationHelper.getCurrentLocation()));
